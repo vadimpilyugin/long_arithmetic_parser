@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <assert.h>
 
 #define SUCCESS 0
 #define TRUE 1
@@ -10,6 +11,7 @@
 #define NO_MEMORY -3
 #define INVALID_ARGUMENT -4
 #define NULL_BYTE '\0'
+#define BASE 10
 
 enum lexems {
 	PLUS = '+',
@@ -134,10 +136,10 @@ int add(const char *number1, const char *number2, char **_result)
 		number1_digit = i < number1_size ? number1[number_1_pos - i] : ZERO;
 		number2_digit = i < number2_size ? number2[number_2_pos - i] : ZERO;
 		sum = (number1_digit - ZERO) + (number2_digit - ZERO) + cf;
-		if(sum >= 10)
+		if(sum >= BASE)
 		{
 			cf = 1;
-			sum -= 10;
+			sum -= BASE;
 		}
 		else
 			cf = 0;
@@ -148,6 +150,8 @@ int add(const char *number1, const char *number2, char **_result)
 	else
 		number3[0] = '0';
 	remove_zeros(number3);
+	assert ((*_result) != NULL);
+	free (*_result);
 	*_result = number3;
 	return SUCCESS;
 }
@@ -220,6 +224,7 @@ int negate (char **number_) {
 		char *negative_number = (char *)malloc(strlen(number) + 2);
 		strncpy(negative_number+1, number, strlen(number) + 1);
 		negative_number[0] = MINUS;
+		assert ((*number_) != NULL);
 		free (number);
 		*number_ = negative_number;
 	}
@@ -260,6 +265,7 @@ int add_zeros (char **number_, int to_len) {
 			new_n[i] = ZERO;
 		strncpy(new_n + number_of_zeros, number, number_len + 1);
 		// записываем на место старого числа новое
+		assert ((*number_) != NULL);
 		free (number);
 		*number_ = new_n;
 		return SUCCESS;
@@ -292,11 +298,13 @@ int subtract(const char *number1, const char *number2, char **number3) {
 	if (number1 == NULL || number2 == NULL || number3 == NULL)
 		return INVALID_ARGUMENT;
 	int compare_args = compare(number1, number2);
+	assert ((*number3) != NULL);
+	free (*number3);
 	if (compare_args == NONE) {
 		*number3 = new_number (zero_number);
 	}
 	else if (compare_args == FALSE) {
-		char *result = NULL;
+		char *result = new_number (zero_number);
 		subtract(number2, number1, &result);
 		negate(&result);
 		*number3 = result;
@@ -309,8 +317,8 @@ int subtract(const char *number1, const char *number2, char **number3) {
 		add_zeros(&new_n2, number_size);
 		char *result = new_number(zero_number);
 		add_zeros (&result, number_size);
-		printf ("Первое число: %s\n", number1);
-		printf ("Второе число: %s\n", new_n2);
+		// printf ("Первое число: %s\n", number1);
+		// printf ("Второе число: %s\n", new_n2);
 		int carry_flag = 0;
 		int i;
 		for (i = number_size - 1; i >= 0; i--) {
@@ -318,65 +326,182 @@ int subtract(const char *number1, const char *number2, char **number3) {
 			int digit_result = number1[i] - new_n2[i] - carry_flag;
 			if (digit_result < 0) {
 				carry_flag = 1;
-				digit_result += 10;
-				printf ("Carry, result = %d\n", digit_result);
+				digit_result += BASE;
+				// printf ("Carry, result = %d\n", digit_result);
 			}
 			else {
 				carry_flag = 0;
-				printf ("No carry, result = %d\n", digit_result);
+				// printf ("No carry, result = %d\n", digit_result);
 			}
 			result[i] = digit_result + ZERO;
 		}
 		free (new_n2);
+		// printf ("Результат с нулями: %s\n", result);
 		remove_zeros (result);
+		// printf ("Результат: %s\n", result);
 		*number3 = result;
 	}
 	return SUCCESS;
 }
 
-// int add_signed(const char *signed_number1, const char *signed_number2, char **_result)
-// {
-// 	char *number1 = NULL, *number2 = NULL;
-// 	char number1_sign = 0, number2_sign = 0, result_sign = 0;
-// 	int code = 0;
+int shift_left (char **number_, int times) {
+	if (number_ == NULL)
+		return INVALID_ARGUMENT;
+	if (times == 0)
+		return SUCCESS;
+	char *number = *number_;
+	int number_len = strlen (number);
+	// Новое число будет иметь дополнительно times нулей
+	char *new_n = (char *) malloc (number_len + 1 + times);
+	strncpy (new_n, number, number_len + 1); // нулевой байт
+	char *zeros = new_number(zero_number);
+	add_zeros (&zeros, times);
+	strncat (new_n, zeros, times + 1); // нулевой байт
+	free (zeros);
+	assert ((*number_) != NULL);
+	free (*number_);
+	*number_ = new_n;
+	return SUCCESS;
+}
 
-// 	// Разделяем число и знак
-// 	divide_signed_number(signed_number1, &number1, &number1_sign);
-// 	divide_signed_number(signed_number2, &number2, &number2_sign);
+int multiply_by_digit (const char *number, const char digit, char **number3) {
+	if (number == NULL || number3 == NULL)
+		return INVALID_ARGUMENT;
+	// убираем лишние нули
+	char *new_n = new_number (number);
+	remove_zeros (new_n);
+	int number_size = strlen(new_n);
+	// в результате будет не больше number_size + 1 цифры
+	char *result = new_number (zero_number);
+	add_zeros (&result, number_size + 1);
+	// умножаем
+	int carry = 0;
+	int digit_value = digit - ZERO;
+	int i;
+	int sum;
+	for (i = number_size - 1; i >= 0; i--) {
+		sum = (new_n[i] - ZERO) * digit_value + carry;
+		result[i+1] = sum % BASE + ZERO;
+		carry = sum / BASE;
+	}
+	result[0] = carry + ZERO;
+	remove_zeros (result);
+	assert ((*number3) != NULL);
+	free (*number3);
+	free (new_n);
+	*number3 = result;
+	return SUCCESS;
+}
 
-// 	// Четыре случая: ++, +-, -+, --
-// 	if(number1_sign == PLUS && number2_sign == PLUS)
-// 		add(number1, number2, _result);
-// 	else if(number1_sign == MINUS && number2_sign == MINUS)
-// 	{
-// 		add(number1, number2, _result);
-// 		result_sign = PLUS;
-// 		concat_number_with_sign()
-// 	}
-// }
+int multiply (const char *number1, const char *number2, char **number3) {
+	if (number1 == NULL || number2 == NULL || number3 == NULL)
+		return INVALID_ARGUMENT;
+	assert (*number3 != NULL);
+	char *new_n1 = new_number (number1);
+	char *new_n2 = new_number (number2);
+	remove_zeros (new_n1);
+	remove_zeros (new_n2);
+	// Для каждой цифры второго числа вычисляем произведение
+	int n_size = strlen (new_n2);
+	int i;
+	// Сумму собираем в аккумуляторе
+	char *accumulator = new_number (zero_number);
+	char *sum = new_number (zero_number);
+	for (i = n_size-1; i >= 0; i--) {
+		multiply_by_digit (new_n1, new_n2[i], &sum);
+		// результат умножения нужно сдвинуть
+		shift_left (&sum, (n_size-1) - i);
+		add (sum, accumulator, &accumulator);
+	}
+	remove_zeros (accumulator);
+	free (new_n1);
+	free (new_n2);
+	free (sum);
+	free (*number3);
+	*number3 = accumulator;
+	return SUCCESS;
+}
+
+void test_addition () {
+	char *n1 = new_number ("0092758295792685692957927597297593");
+	char *n2 = new_number ("000072985370692067259302572307");
+	char *add_result = new_number (zero_number);
+	add (n1, n2, &add_result);
+	char *true_result = new_number ("92758368778056385025186899869900");
+	assert (compare(add_result, true_result) == NONE);
+	free (n1);
+	free (n2);
+	free (true_result);
+	free (add_result);
+	printf ("test_addition: Correct\n");
+}
+
+
+void test_same_addition () {
+	char *n1 = new_number ("0092758295792685692957927597297593");
+	char *n2 = new_number ("000072985370692067259302572307");
+	// char *add_result = new_number (zero_number);
+	add (n1, n2, &n2);
+	char *true_result = new_number ("92758368778056385025186899869900");
+	assert (compare(n2, true_result) == NONE);
+	free (n1);
+	free (n2);
+	free (true_result);
+	// free (add_result);
+	printf ("test_same_addition: Correct\n");
+}
+
+void test_subtraction () {
+	char *n1 = new_number ("0092758295792685692957927597297593");
+	char *n2 = new_number ("000072985370692067259302572307");
+	char *subtract_result = new_number (zero_number);
+	subtract (n2, n1, &subtract_result);
+	char *true_result = new_number ("-92758222807315000890668294725286");
+	assert (compare (subtract_result, true_result) == NONE);
+	free (n1);
+	free (n2);
+	free (true_result);
+	free (subtract_result);
+	printf ("test_subtraction: Correct\n");
+}
+
+void test_shift_left () {
+	char *result = new_number ("95");
+	shift_left (&result, 3);
+	assert (compare (result, "95000") == NONE);
+	printf ("test_shift_left: Correct\n");
+	free (result);
+}
+
+void test_multiply_by_digit () {
+	char *result = new_number (zero_number);
+	multiply_by_digit ("7257483957492758", '7', &result);
+	assert (compare (result, "50802387702449306") == NONE);
+	printf ("test_multiply_by_digit: Correct\n");
+	free (result);
+}
+
+void test_multiplication () {
+	char *n1 = new_number ("0092758295792685692957927597297593");
+	char *n2 = new_number ("000072985370692067259302572307");
+	char *result = new_number ("0");
+	char *true_result = new_number ("6769998603193588141062051447265683640784801860886679557051");
+	multiply (n1,n2,&result);
+	assert (compare (result, true_result) == NONE);
+	printf ("test_multiplication: Correct\n");
+	free (n1);
+	free (n2);
+	free (result);
+	free (true_result);
+}
 
 int main()
 {
-	const char *number1 = "92758295792685692957927597297593";
-	const char *number2 = "72985370692067259302572307";
-	char *add_result = NULL;
-	char *add_result_ = "92758368778056385025186899869900";
-	char *subtract_result = NULL;
-	char *subtract_result_= "-92758222807315000890668294725286";
-	int code = add(number1, number2, &add_result);
-	int code2 = subtract(number2, number1, &subtract_result);
-	if(code != SUCCESS || code2 != SUCCESS)
-		print_error();
-	else
-	{
-		printf("%s + %s = %s\n", number1, number2, add_result);
-		if (compare (add_result, add_result_) == NONE)
-			printf ("Correct\n");
-		printf("%s - %s = %s\n", number2, number1, subtract_result);
-		if (compare (subtract_result, subtract_result_) == NONE)
-			printf ("Correct\n");
-		free(add_result);
-		free(subtract_result);
-	}
+	test_addition ();
+	test_same_addition ();
+	test_subtraction ();
+	test_shift_left ();
+	test_multiply_by_digit ();
+	test_multiplication ();
 	return 0;
 }
