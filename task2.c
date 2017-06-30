@@ -67,6 +67,9 @@ int remove_zeros(char *old_str) {
 	while (*(pointer + n_zeros) == ZERO) {
 		n_zeros++;
 	}
+	if (n_zeros == strlen (old_str))
+		// все нули, оставляем 1
+		n_zeros--;
 	// двигаем 
 	int n_bytes = strlen (old_str) + 1 - n_zeros;
 	memmove (old_str, pointer + n_zeros, n_bytes);
@@ -520,54 +523,7 @@ int divide (const char *number1, const char *number2, char **number3) {
 	return SUCCESS;
 }
 
-#include "tests.h"
 
-char *input = NULL;
-
-
-/*
-	Если произошла ошибка парсинга, то вернется NULL
-	Если дошли до конца строки, то вернется пустая строка
-*/
-char *parse_tokens () {
-	// Пропускаем пробелы перед токеном
-	while (isspace (*input)) input++;
-	// Если input начинается с цифры, то парсим число
-	if (isdigit (*input)) {
-		char *number = new_number (zero_number);
-		while (isdigit (*input)) add_digit(&number, *(input++));
-		remove_zeros (number);
-		return number;
-	}
-	// Проходимся по всем известным программе токенам
-	// Они все однобайтовые
-	switch (*input) {
-		case PLUS: 
-			return new_string (PLUS);
-			break;
-		case MINUS:
-			return new_string (MINUS);
-			break;
-		case MULT:
-			return new_string (MULT);
-			break;
-		case DIV:
-			return new_string (DIV);
-			break;
-		case OPENING_BRACE:
-			return new_string (OPENING_BRACE);
-			break;
-		case CLOSING_BRACE:
-			return new_string (CLOSING_BRACE);
-			break;
-		case NULL_BYTE:
-			return empty_string();
-			break;
-		default:
-			// несуществующая лексема
-			return NULL;
-	}
-}
 
 int add_signed (const char *number1, const char *number2, char **number3) {
 	if (number1 == NULL || number2 == NULL || number3 == NULL)
@@ -602,7 +558,7 @@ int add_signed (const char *number1, const char *number2, char **number3) {
 	free (new_n2);
 	return SUCCESS;
 }
-int subtract_signed (char *number1, char *number2, char **number3) {
+int subtract_signed (const char *number1, const char *number2, char **number3) {
 	if (number1 == NULL || number2 == NULL || number3 == NULL)
 		return INVALID_ARGUMENT;
 	assert (*number3 != NULL);
@@ -636,7 +592,7 @@ int subtract_signed (char *number1, char *number2, char **number3) {
 	free (new_n2);
 	return SUCCESS;
 }
-int mult_signed (char *number1, char *number2, char **number3) {
+int mult_signed (const char *number1, const char *number2, char **number3) {
 	if (number1 == NULL || number2 == NULL || number3 == NULL)
 		return INVALID_ARGUMENT;
 	assert (*number3 != NULL);
@@ -645,30 +601,107 @@ int mult_signed (char *number1, char *number2, char **number3) {
 	if (negative (new_n1) && negative (new_n2)) {
 		// оба отрицательные, то же самое, что положительные
 		negate (&new_n1);
-		negate (&new_n1);
-		// вычесть из 2 1
-		subtract (new_n2, new_n1, number3);
+		negate (&new_n2);
+		multiply (new_n1, new_n2, number3);
 		
 	}
 	else if (negative (new_n1) && !negative (new_n2)) {
 		negate (&new_n1);
-		add (new_n1, new_n2, number3);
+		multiply (new_n1, new_n2, number3);
 		negate (number3);
 	}
 	else if (!negative (new_n1) && negative (new_n2)) {
 		negate (&new_n2);
-		// оба положительные, сумма
-		add (new_n1, new_n2, number3);
-		// вычесть из 1 2
+		multiply (new_n1, new_n2, number3);
+		negate (number3);
 	}
 	else {
-		subtract (new_n1, new_n2, number3);
+		multiply (new_n1, new_n2, number3);
 	}
 	free (new_n1);
 	free (new_n2);
 	return SUCCESS;
 }
 
+int divide_signed (const char *number1, const char *number2, char **number3) {
+	if (number1 == NULL || number2 == NULL || number3 == NULL)
+		return INVALID_ARGUMENT;
+	assert (*number3 != NULL);
+	char *new_n1 = new_number (number1);
+	char *new_n2 = new_number (number2);
+
+	int n1_neg = negative (new_n1);
+	int n2_neg = negative (new_n2);
+
+	if (n1_neg) 
+		negate (&new_n1);
+	
+	if (n2_neg)
+		negate (&new_n2);
+	divide (new_n1, new_n2, number3);
+
+	if (n1_neg && n2_neg)
+		; // уже правильно
+	else if (n1_neg || n2_neg)
+		negate (number3);
+
+	free (new_n1);
+	free (new_n2);
+	return SUCCESS;
+}
+
+char *input = NULL;
+
+
+/*
+	Если произошла ошибка парсинга, то вернется NULL
+	Если дошли до конца строки, то вернется пустая строка
+*/
+char *parse_tokens () {
+	// Пропускаем пробелы перед токеном
+	printf ("Состояние строки: %s, strlen = %d\n", input, strlen (input));
+	while (isspace (*input) && (*input) != NULL_BYTE) input++;
+	// Если input начинается с цифры, то парсим число
+	if (isdigit (*input)) {
+		char *number = new_number (zero_number);
+		while (isdigit (*input)) add_digit(&number, *(input++));
+		remove_zeros (number);
+		printf ("Input: %s\n", number);
+		return number;
+	}
+	printf ("Привет: %s\n", input);
+	// Проходимся по всем известным программе токенам
+	// Они все однобайтовые
+	switch (*(input++)) {
+		case PLUS: 
+			printf ("Plus\n");
+			return new_string (PLUS);
+			break;
+		case MINUS:
+			return new_string (MINUS);
+			break;
+		case MULT:
+			return new_string (MULT);
+			break;
+		case DIV:
+			return new_string (DIV);
+			break;
+		case OPENING_BRACE:
+			return new_string (OPENING_BRACE);
+			break;
+		case CLOSING_BRACE:
+			return new_string (CLOSING_BRACE);
+			break;
+		case NULL_BYTE:
+			printf ("Empty\n");
+			input --; // вернуть нулевой байт
+			return empty_string();
+			break;
+		default:
+			// несуществующая лексема
+			return NULL;
+	}
+}
 struct Expression {
 	char *token;
 	struct Expression *left;
@@ -710,6 +743,7 @@ Expression *parse_simple_expression() {
 			result -> token = token;
 			result -> left = NULL;
 			result -> right = NULL;
+			printf ("Foo: %s\n", token);
 			return result;
 		}
 		else if (token[0] == OPENING_BRACE) {
@@ -770,10 +804,13 @@ Expression *parse_binary_expression(int min_priority) {
 			return NULL;
 		}
 		int priority = get_priority(op);
+		printf ("Operation: %s, priority: %d, min: %d\n", op, priority, min_priority);
+        
 		// Выходим из цикла если ее приоритет слишком низок (или это не бинарная операция)
 		if (priority <= min_priority) {
             input -= strlen (op); // Отдаем токен обратно
             free (op);
+		printf ("Hello, %s\n", left_expr -> token);
             return left_expr; // возвращаем выражение слева.
         }
         // Парсим выражение справа. Текущая операция задает минимальный приоритет.
@@ -788,6 +825,7 @@ Expression *parse_binary_expression(int min_priority) {
         new_expr -> left = left_expr;
         new_expr -> right = right_expr;
         left_expr = new_expr; // Обновляем выражение слева
+        printf ("Parsed binary expression\n");
     } // Повторяем цикл: парсинг операции, и проверка ее приоритета.
 }
 
@@ -796,38 +834,63 @@ Expression *parse () {
 }
 
 // NULL при ошибке
-// char *eval(Expression *e) {
-// 	if (e == NULL)
-// 		return NULL;
-// 	if (e -> left != NULL && e -> right != NULL)
-// 		char *a = eval (e -> left);
-// 		char *a = eval (e -> right);
-// 		if (e -> token[0] == PLUS) return a + b;
-// 		if (e -> token[0] == MINUS) return a - b;
-// 		if (e -> token[0] == DIV) return a * b;
-// 		if (e -> token[0] == MULT) return a / b;
-// 		if (e.token == "**") return pow(a, b);
-// 		if (e.token == "mod") return (int)a % (int)b;
-// 		throw std::runtime_error("Unknown binary operator");
-// 	}
+char *eval(Expression *e) {
+	if (e == NULL)
+		return NULL;
+	if (e -> left != NULL && e -> right != NULL) {
+		char *a = eval (e -> left);
+		char *b = eval (e -> right);
+		char *result = new_number (zero_number);
+		if (e -> token[0] == PLUS) {
+			add_signed (a,b,&result);
+			free (a);
+			free (b);
+			return result;
+		}
+		if (e -> token[0] == MINUS) {
+			subtract_signed (a,b,&result);
+			free (a);
+			free (b);
+			return result;
+		}
+		if (e -> token[0] == MULT) {
+			mult_signed (a,b,&result);
+			free (a);
+			free (b);
+			return result;
+		}
+		if (e -> token[0] == DIV) {
+			divide_signed (a,b,&result);
+			free (a);
+			free (b);
+			return result;
+		}
+		// неопознанный оператор
+		free (result);
+		return NULL;
+	}
+	else if ((e -> left != NULL && e -> right == NULL) || (e -> left == NULL && e -> right != NULL)) {
+		char *a = eval (e -> left);
+		if (e -> token[0] == PLUS) {
+			// вернуть само число
+			return a;
+		}
+		if (e -> token[0] == MINUS) {
+			// вернуть негатив числа
+			negate (&a);
+			return a;
+		}
+		return NULL;
+	}
+	else {
+		// вернуть токен
+		printf ("Bar: %s\n", e->token);
+		return e -> token;
+	}
+	return NULL;
+}
 
-// 	case 1: {
-// 		auto a = eval(e.args[0]);
-// 		if (e.token == "+") return +a;
-// 		if (e.token == "-") return -a;
-// 		if (e.token == "abs") return abs(a);
-// 		if (e.token == "sin") return sin(a);
-// 		if (e.token == "cos") return cos(a);
-// 		throw std::runtime_error("Unknown unary operator");
-// 	}
-
-// 	case 0:
-// 		return strtod(e.token.c_str(), nullptr);
-// 	}
-
-// 	throw std::runtime_error("Unknown expression type");
-// }
-
+#include "tests.h"
 int main()
 {
 	test_compare ();
@@ -843,10 +906,13 @@ int main()
 	test_division ();
 	test_add_signed ();
 	test_subtract_signed ();
+	test_mult_signed ();
+	test_div_signed ();
+	test_parse ();
 
-	size_t n = 0;
+	// size_t n = 0;
 	// int code = getline (&input, &n, stdin);
-	char *input_str_ptr = input; // для free
+	// char *input_str_ptr = input; // для free
 	// if (code == -1) {
 		// getline failed
 		// free (input);

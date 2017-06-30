@@ -141,19 +141,19 @@ void test_division () {
 }
 
 void test_add_signed () {
-	char *n1 = new_number ("-10");
-	char *n2 = new_number ("10");
-	char *n3 = new_number ("20");
-	char *n4 = new_number ("-20");
+	char *n1 = new_number ("-273");
+	char *n2 = new_number ("2344");
+	char *n3 = new_number ("6654");
+	char *n4 = new_number ("-4839");
 	char *add_result = new_number (zero_number);
 	add_signed (n2, n3, &add_result);
-	assert (compare(add_result, "30") == NONE);
+	assert (compare(add_result, "8998") == NONE);
 	add_signed (n2, n4, &add_result);
-	assert (compare(add_result, "-10") == NONE);
+	assert (compare(add_result, "-2495") == NONE);
 	add_signed (n4, n3, &add_result);
-	assert (compare(add_result, "0") == NONE);
+	assert (compare(add_result, "1815") == NONE);
 	add_signed (n1, n4, &add_result);
-	assert (compare(add_result, "-30") == NONE);
+	assert (compare(add_result, "-5112") == NONE);
 	free (n1);
 	free (n2);
 	free (n3);
@@ -181,4 +181,202 @@ void test_subtract_signed () {
 	free (n4);
 	free (add_result);
 	printf ("test_subtraction_signed: Correct\n");
+}
+
+void test_mult_signed () {
+	char *result = new_number (zero_number);
+	
+	mult_signed ("1", "2", &result);
+	assert (compare (result, "2") == NONE);
+	
+	mult_signed ("-270", "10", &result);
+	assert (compare (result, "-2700") == NONE);
+	
+	mult_signed ("4799", "-1727", &result);
+	assert (compare (result, "-8287873") == NONE);
+	
+	mult_signed ("-122", "-20", &result);
+	assert (compare (result, "2440") == NONE);
+	
+	free (result);
+	printf ("test_mult_signed: Correct\n");
+}
+void test_div_signed () {
+	char *result = new_number (zero_number);
+	
+	divide_signed ("1", "2", &result);
+	assert (compare (result, "0") == NONE);
+	
+	divide_signed ("-270", "10", &result);
+	assert (compare (result, "-27") == NONE);
+	
+	divide_signed ("4799", "-1727", &result);
+	assert (compare (result, "-2") == NONE);
+	
+	divide_signed ("-122", "-20", &result);
+	assert (compare (result, "6") == NONE);
+	
+	free (result);
+	printf ("test_div_signed: Correct\n");
+}
+
+void test_parse () {
+	Expression *expr;
+	char *result;
+
+	input = "0";
+	expr = parse ();
+	printf ("Result: %s\n", expr -> token);
+	result = eval (expr);
+	printf ("Answer = %s\n", result);
+	assert (compare ("0", result) == NONE);
+	input = "1";
+	expr = parse ();
+	printf ("Result: %s\n", expr -> token);
+	result = eval (expr);
+	printf ("Answer = %s\n", result);
+	assert (compare ("1", result) == NONE);
+	input = "2";
+	expr = parse ();
+	printf ("Result: %s\n", expr -> token);
+	result = eval (expr);
+	printf ("Answer = %s\n", result);
+	assert (compare ("2", result) == NONE);
+	input = "9";
+	expr = parse ();
+	printf ("Result: %s\n", expr -> token);
+	result = eval (expr);
+	printf ("Answer = %s\n", result);
+	assert (compare ("9", result) == NONE);
+	input = "10";
+	expr = parse ();
+	printf ("Result: %s\n", expr -> token);
+	result = eval (expr);
+	printf ("Answer = %s\n", result);
+	assert (compare ("10", result) == NONE);
+	input = "+1";
+	expr = parse ();
+	printf ("Result: %s\n", expr -> token);
+	result = eval (expr);
+	printf ("Answer = %s\n", result);
+	assert (compare ("1", result) == NONE);
+	input = "-1";
+	expr = parse ();
+	printf ("Result: %s\n", expr -> token);
+	result = eval (expr);
+	printf ("Answer = %s\n", result);
+	assert (compare ("-1", result) == NONE);
+	input = "(1)";
+	expr = parse ();
+	printf ("Result: %s\n", expr -> token);
+	result = eval (expr);
+	printf ("Answer = %s\n", result);
+	assert (compare ("1", result) == NONE);
+	input = "(-1)";
+	expr = parse ();
+	printf ("Result: %s\n", expr -> token);
+	result = eval (expr);
+	printf ("Answer = %s\n", result);
+	assert (compare ("-1", result) == NONE);
+	input = "1+20";
+	expr = parse ();
+	printf ("Result: %s\n", expr -> token);
+	result = eval (expr);
+	printf ("Answer = %s\n", result);
+	assert (compare ("21", result) == NONE);
+	input = "1 +  20";
+	expr = parse ();
+	printf ("Result: %s\n", expr -> token);
+	result = eval (expr);
+	printf ("Answer = %s\n", result);
+	assert (compare ("21", result) == NONE);
+	printf ("DELIM___\n");
+
+	
+	input = "1+20+300";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("321", result) == NONE);
+	
+	input = "1+20+300+4000";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("4321", result) == NONE);
+	
+	input = "-1+20";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("19", result) == NONE);
+	
+	input = "--1+20";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("21", result) == NONE);
+	
+	input = "---1+20";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("19", result) == NONE);
+	
+	input = "(1+20)";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("21", result) == NONE);
+	
+	input = "-2*3";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("-6", result) == NONE);
+	
+	input = "2*-3";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("-6", result) == NONE);
+	
+	input = "1++2";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("3", result) == NONE);
+
+	input = "1+10*2";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("21", result) == NONE);
+	
+	input = "10*2+1";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("21", result) == NONE);
+	
+	input = "(1+20)*2";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("42", result) == NONE);
+	
+	input = "2*(1+20)";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("42", result) == NONE);
+	
+	input = "(1+2)*(3+4)";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("21", result) == NONE);
+
+	input = "2*3+4*5";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("26", result) == NONE);
+	
+	input = "100+2*10+3";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("123", result) == NONE);
+	
+	input = "5 * 4 + 3 * 2 + 1";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("27", result) == NONE);
+	
+	printf ("Прошел все тесты!\n");
 }
