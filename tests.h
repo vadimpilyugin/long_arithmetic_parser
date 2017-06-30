@@ -433,6 +433,15 @@ void test_parse () {
 	assert (compare ("27", result) == NONE);
 	free_expression (expr);
 	free (result);
+	
+	input = "100/-16 + (7/21 + 21/7)/-1   - -100/16 + -1/-1";
+	expr = parse ();
+	result = eval (expr);
+	assert (compare ("-2", result) == NONE);
+	free_expression (expr);
+	free (result);
+
+	printf ("Прошел маленькие тесты!\n");
 }
 
 void test_big_parse () {
@@ -442,8 +451,8 @@ void test_big_parse () {
 	input = "(1+2)*3353454445445345434545435647/6";
 	expr = parse ();
 	result = eval (expr);
-	// assert (compare ("1676727222722672717272717823", result) == NONE);
+	assert (compare ("1676727222722672717272717823", result) == NONE);
 	free_expression (expr);
 	free (result);
-	// printf ("Прошел главный тест!\n");
+	printf ("Прошел главный тест!\n");
 }

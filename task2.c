@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -902,36 +903,47 @@ char *eval(Expression *e) {
 #include "tests.h"
 int main()
 {
-	test_compare ();
-	test_addition ();
-	test_same_addition ();
-	test_subtraction ();
-	test_shift_left ();
-	test_multiply_by_digit ();
-	test_multiplication ();
-	tests_multiplication ();
-	test_divide_partial ();
-	test_add_digit ();
-	test_division ();
-	test_add_signed ();
-	test_subtract_signed ();
-	test_mult_signed ();
-	test_div_signed ();
+	// test_compare ();
+	// test_addition ();
+	// test_same_addition ();
+	// test_subtraction ();
+	// test_shift_left ();
+	// test_multiply_by_digit ();
+	// test_multiplication ();
+	// tests_multiplication ();
+	// test_divide_partial ();
+	// test_add_digit ();
+	// test_division ();
+	// test_add_signed ();
+	// test_subtract_signed ();
+	// test_mult_signed ();
+	// test_div_signed ();
 	test_parse ();
 	test_big_parse ();
 
-	// size_t n = 0;
-	// int code = getline (&input, &n, stdin);
-	// char *input_str_ptr = input; // для free
-	// if (code == -1) {
+	size_t n = 0;
+	input = NULL;
+	int code = getline (&input, &n, stdin);
+	char *input_str_ptr = input; // для free
+	if (code == -1) {
 		// getline failed
-		// free (input);
-		// print_error();
-	// }
-	// else {
+		free (input);
+		print_error();
+	}
+	else {
 		// в input теперь находится все выражение
-
-	// }
-	// free (input_str_ptr);
+		Expression *expr = parse ();
+		// printf ("Hello");
+		char *answer = eval (expr);
+		if (expr == NULL || answer == NULL)
+			print_error ();
+		else
+			printf ("%s\n", answer);
+		if (expr)
+			free_expression (expr);
+		if (answer)
+			free (answer);
+	}
+	free (input_str_ptr);
 	return 0;
 }
