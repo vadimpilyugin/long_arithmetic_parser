@@ -880,15 +880,14 @@ char *eval(Expression *e) {
 	}
 	else if ((e -> left != NULL && e -> right == NULL) || (e -> left == NULL && e -> right != NULL)) {
 		char *a = eval (e -> left);
-		char *result = new_number (a);
 		if (e -> token[0] == PLUS) {
 			// вернуть само число
-			return result;
+			return a;
 		}
 		if (e -> token[0] == MINUS) {
 			// вернуть негатив числа
-			negate (&result);
-			return result;
+			negate (&a);
+			return a;
 		}
 		return NULL;
 	}
@@ -918,6 +917,7 @@ int main()
 	test_subtract_signed ();
 	test_mult_signed ();
 	test_div_signed ();
+	test_parse ();
 	test_big_parse ();
 
 	// size_t n = 0;

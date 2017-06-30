@@ -225,7 +225,7 @@ void test_parse () {
 	char *result = NULL;
 
 	input = "0";
-	// expr = parse ();
+	expr = parse ();
 	// printf ("Result: %s\n", expr -> token);
 	result = eval (expr);
 	// printf ("Answer = %s\n", result);
@@ -233,7 +233,7 @@ void test_parse () {
 	free_expression (expr);
 	free (result);
 	input = "1";
-	// expr = parse ();
+	expr = parse ();
 	// printf ("Result: %s\n", expr -> token);
 	result = eval (expr);
 	// printf ("Answer = %s\n", result);
@@ -241,7 +241,7 @@ void test_parse () {
 	free_expression (expr);
 	free (result);
 	input = "2";
-	// expr = parse ();
+	expr = parse ();
 	// printf ("Result: %s\n", expr -> token);
 	result = eval (expr);
 	// printf ("Answer = %s\n", result);
@@ -249,7 +249,7 @@ void test_parse () {
 	free_expression (expr);
 	free (result);
 	input = "9";
-	// expr = parse ();
+	expr = parse ();
 	// printf ("Result: %s\n", expr -> token);
 	result = eval (expr);
 	// printf ("Answer = %s\n", result);
@@ -257,7 +257,7 @@ void test_parse () {
 	free_expression (expr);
 	free (result);
 	input = "10";
-	// expr = parse ();
+	expr = parse ();
 	// printf ("Result: %s\n", expr -> token);
 	result = eval (expr);
 	// printf ("Answer = %s\n", result);
@@ -265,7 +265,7 @@ void test_parse () {
 	free_expression (expr);
 	free (result);
 	input = "+1";
-	// expr = parse ();
+	expr = parse ();
 	// printf ("Result: %s\n", expr -> token);
 	result = eval (expr);
 	// printf ("Answer = %s\n", result);
@@ -273,7 +273,7 @@ void test_parse () {
 	free_expression (expr);
 	free (result);
 	input = "-1";
-	// expr = parse ();
+	expr = parse ();
 	// printf ("Result: %s\n", expr -> token);
 	result = eval (expr);
 	// printf ("Answer = %s\n", result);
@@ -281,7 +281,7 @@ void test_parse () {
 	free_expression (expr);
 	free (result);
 	input = "(1)";
-	// expr = parse ();
+	expr = parse ();
 	// printf ("Result: %s\n", expr -> token);
 	result = eval (expr);
 	// printf ("Answer = %s\n", result);
@@ -289,7 +289,7 @@ void test_parse () {
 	free_expression (expr);
 	free (result);
 	input = "(-1)";
-	// expr = parse ();
+	expr = parse ();
 	// printf ("Result: %s\n", expr -> token);
 	result = eval (expr);
 	// printf ("Answer = %s\n", result);
@@ -297,7 +297,7 @@ void test_parse () {
 	free_expression (expr);
 	free (result);
 	input = "1+20";
-	// expr = parse ();
+	expr = parse ();
 	// printf ("Result: %s\n", expr -> token);
 	result = eval (expr);
 	// printf ("Answer = %s\n", result);
@@ -305,7 +305,7 @@ void test_parse () {
 	free_expression (expr);
 	free (result);
 	input = "1 +  20";
-	// expr = parse ();
+	expr = parse ();
 	// printf ("Result: %s\n", expr -> token);
 	result = eval (expr);
 	// printf ("Answer = %s\n", result);
@@ -316,127 +316,123 @@ void test_parse () {
 
 	
 	input = "1+20+300";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("321", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "1+20+300+4000";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("4321", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "-1+20";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("19", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "--1+20";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("21", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "---1+20";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("19", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "(1+20)";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("21", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "-2*3";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("-6", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "2*-3";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("-6", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "1++2";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("3", result) == NONE);
 	free_expression (expr);
 	free (result);
 
 	input = "1+10*2";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("21", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "10*2+1";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("21", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "(1+20)*2";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("42", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "2*(1+20)";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("42", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "(1+2)*(3+4)";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("21", result) == NONE);
 	free_expression (expr);
 	free (result);
 
 	input = "2*3+4*5";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("26", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "100+2*10+3";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("123", result) == NONE);
 	free_expression (expr);
 	free (result);
 	
 	input = "5 * 4 + 3 * 2 + 1";
-	// expr = parse ();
+	expr = parse ();
 	result = eval (expr);
 	assert (compare ("27", result) == NONE);
 	free_expression (expr);
 	free (result);
-
-	
-	
-	
 }
 
 void test_big_parse () {
@@ -445,9 +441,9 @@ void test_big_parse () {
 
 	input = "(1+2)*3353454445445345434545435647/6";
 	expr = parse ();
-	// result = eval (expr);
+	result = eval (expr);
 	// assert (compare ("1676727222722672717272717823", result) == NONE);
 	free_expression (expr);
-	// free (result);
+	free (result);
 	// printf ("Прошел главный тест!\n");
 }
