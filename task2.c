@@ -659,22 +659,22 @@ char *input = NULL;
 */
 char *parse_tokens () {
 	// Пропускаем пробелы перед токеном
-	printf ("Состояние строки: %s, strlen = %d\n", input, strlen (input));
+	// printf ("Состояние строки: %s, strlen = %d\n", input, strlen (input));
 	while (isspace (*input) && (*input) != NULL_BYTE) input++;
 	// Если input начинается с цифры, то парсим число
 	if (isdigit (*input)) {
 		char *number = new_number (zero_number);
 		while (isdigit (*input)) add_digit(&number, *(input++));
 		remove_zeros (number);
-		printf ("Input: %s\n", number);
+		// printf ("Input: %s\n", number);
 		return number;
 	}
-	printf ("Привет: %s\n", input);
+	// printf ("Привет: %s\n", input);
 	// Проходимся по всем известным программе токенам
 	// Они все однобайтовые
 	switch (*(input++)) {
 		case PLUS: 
-			printf ("Plus\n");
+			// printf ("Plus\n");
 			return new_string (PLUS);
 			break;
 		case MINUS:
@@ -693,7 +693,7 @@ char *parse_tokens () {
 			return new_string (CLOSING_BRACE);
 			break;
 		case NULL_BYTE:
-			printf ("Empty\n");
+			// printf ("Empty\n");
 			input --; // вернуть нулевой байт
 			return empty_string();
 			break;
@@ -712,12 +712,21 @@ typedef struct Expression Expression;
 
 
 void free_expression (Expression *expr) {
-	if (expr -> token != NULL)
+	if (expr == NULL)
+		return;
+	if (expr -> token != NULL) {
 		free (expr -> token);
-	if (expr -> left != NULL)
+		expr -> token = NULL;
+	}
+	if (expr -> left != NULL) {
 		free_expression (expr -> left);
-	if (expr -> right != NULL)
+		expr -> left = NULL;
+	}
+	if (expr -> right != NULL) {
 		free_expression (expr -> right);
+		expr -> right = NULL;
+	}
+	free (expr);
 }
 
 Expression *parse ();
@@ -743,7 +752,7 @@ Expression *parse_simple_expression() {
 			result -> token = token;
 			result -> left = NULL;
 			result -> right = NULL;
-			printf ("Foo: %s\n", token);
+			// printf ("Foo: %s\n", token);
 			return result;
 		}
 		else if (token[0] == OPENING_BRACE) {
@@ -804,13 +813,13 @@ Expression *parse_binary_expression(int min_priority) {
 			return NULL;
 		}
 		int priority = get_priority(op);
-		printf ("Operation: %s, priority: %d, min: %d\n", op, priority, min_priority);
+		// printf ("Operation: %s, priority: %d, min: %d\n", op, priority, min_priority);
         
 		// Выходим из цикла если ее приоритет слишком низок (или это не бинарная операция)
 		if (priority <= min_priority) {
             input -= strlen (op); // Отдаем токен обратно
             free (op);
-		printf ("Hello, %s\n", left_expr -> token);
+		// printf ("Hello, %s\n", left_expr -> token);
             return left_expr; // возвращаем выражение слева.
         }
         // Парсим выражение справа. Текущая операция задает минимальный приоритет.
@@ -825,7 +834,7 @@ Expression *parse_binary_expression(int min_priority) {
         new_expr -> left = left_expr;
         new_expr -> right = right_expr;
         left_expr = new_expr; // Обновляем выражение слева
-        printf ("Parsed binary expression\n");
+        // printf ("Parsed binary expression\n");
     } // Повторяем цикл: парсинг операции, и проверка ее приоритета.
 }
 
@@ -871,21 +880,22 @@ char *eval(Expression *e) {
 	}
 	else if ((e -> left != NULL && e -> right == NULL) || (e -> left == NULL && e -> right != NULL)) {
 		char *a = eval (e -> left);
+		char *result = new_number (a);
 		if (e -> token[0] == PLUS) {
 			// вернуть само число
-			return a;
+			return result;
 		}
 		if (e -> token[0] == MINUS) {
 			// вернуть негатив числа
-			negate (&a);
-			return a;
+			negate (&result);
+			return result;
 		}
 		return NULL;
 	}
 	else {
 		// вернуть токен
-		printf ("Bar: %s\n", e->token);
-		return e -> token;
+		// printf ("Bar: %s\n", e->token);
+		return new_number(e -> token);
 	}
 	return NULL;
 }
@@ -908,7 +918,7 @@ int main()
 	test_subtract_signed ();
 	test_mult_signed ();
 	test_div_signed ();
-	test_parse ();
+	test_big_parse ();
 
 	// size_t n = 0;
 	// int code = getline (&input, &n, stdin);
