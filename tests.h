@@ -76,6 +76,21 @@ void test_multiplication () {
 	free (true_result);
 }
 
+void tests_multiplication () {
+	char *result = new_number (zero_number);
+	multiply ("20", "30", &result);
+	assert (compare (result, "600") == NONE);
+	multiply ("174", "35", &result);
+	assert (compare (result, "6090") == NONE);
+	multiply ("2", "1", &result);
+	assert (compare (result, "2") == NONE);
+	multiply ("0", "233", &result);
+	assert (compare (result, "0") == NONE);
+	multiply ("323", "000", &result);
+	assert (compare (result, "0") == NONE);
+	free (result);
+}
+
 void test_compare () {
 	assert(compare ("127", "016") == TRUE);
 	assert(compare ("005", "016") == FALSE);

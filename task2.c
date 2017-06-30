@@ -309,10 +309,7 @@ int subtract(const char *number1, const char *number2, char **number3) {
 	if (number1 == NULL || number2 == NULL || number3 == NULL)
 		return INVALID_ARGUMENT;
 	assert ((*number3) != NULL);
-	// if (*number3 == number1 || *number3 == number2)
-	// 	; // не освобождать память
-	// else
-	// 	free (*number3);
+	free (*number3);
 	int compare_args = compare(number1, number2);
 	if (compare_args == NONE) {
 		*number3 = new_number (zero_number);
@@ -840,6 +837,7 @@ int main()
 	test_shift_left ();
 	test_multiply_by_digit ();
 	test_multiplication ();
+	tests_multiplication ();
 	test_divide_partial ();
 	test_add_digit ();
 	test_division ();
@@ -847,17 +845,17 @@ int main()
 	test_subtract_signed ();
 
 	size_t n = 0;
-	int code = getline (&input, &n, stdin);
+	// int code = getline (&input, &n, stdin);
 	char *input_str_ptr = input; // для free
-	if (code == -1) {
+	// if (code == -1) {
 		// getline failed
-		free (input);
-		print_error();
-	}
-	else {
+		// free (input);
+		// print_error();
+	// }
+	// else {
 		// в input теперь находится все выражение
 
-	}
-	free (input_str_ptr);
+	// }
+	// free (input_str_ptr);
 	return 0;
 }
