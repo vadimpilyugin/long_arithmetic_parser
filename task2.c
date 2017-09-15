@@ -10,10 +10,14 @@
 #define TRUE 1
 #define FALSE 0
 #define NONE 2
-#define NO_MEMORY -3
-#define INVALID_ARGUMENT -4
 #define NULL_BYTE '\0'
 #define BASE 10
+
+#define ASSERT_ERROR -1
+#define NO_MEMORY -2
+#define READ_ERROR -3
+#define INVALID_ARGUMENT -4
+#define DEBUG 0
 
 enum lexems {
 	PLUS = '+',
@@ -900,34 +904,186 @@ char *eval(Expression *e) {
 	return NULL;
 }
 
+/*
+	Функция возвращает массив строк, прочитанных из ввода
+*/
+
+int get_lines(char ***_lines, size_t *_lines_num, size_t **_lines_len)
+{
+	size_t MAX_LINES = 20;
+	size_t MULTIPLE = 2;
+
+	// Array of lines
+	char **lines = *_lines;
+	// Size of that array
+	size_t total_lines = *_lines_num;
+	// Array containing number of characters in each line
+	size_t *lines_len = lines_len;
+	// Counter
+	size_t i = 0;
+	// Number of lines read from stdin
+	size_t lines_read = 0;
+	// Temporary buffer for a line
+	char *line = NULL;
+	// Size of that buffer
+	size_t line_len = 0;
+	// Number of characters or error code retreived via getline() call
+	ssize_t chars_read = 0;
+	// Temporary buffer for realloc()
+	void *buf = NULL;
+
+	// Allocate buffer for all lines
+	lines = (char **)malloc(MAX_LINES*sizeof(char *));
+	if(lines == NULL) {
+		*_lines = NULL;
+		*_lines_num = 0;
+		*_lines_len = NULL;
+		return NO_MEMORY;
+	}
+	total_lines = MAX_LINES;
+	for(i = 0; i < total_lines; i++)
+		lines[i] = NULL;
+	// Allocate buffer for the number of characters in each line
+	lines_len = (size_t *)malloc(MAX_LINES*sizeof(size_t));
+	if(lines_len == NULL) {
+		free(lines);
+		*_lines = NULL;
+		*_lines_num = 0;
+		*_lines_len = NULL;
+		return NO_MEMORY;
+	}
+	for(i = 0; i < MAX_LINES; i++)
+		lines_len[i] = 0;
+	while((chars_read = getline(&line,&line_len,stdin)) != -1)
+	{
+		// read next line
+		lines[lines_read] = line;
+		// write the number of read chars to array
+		lines_len[lines_read] = chars_read;
+		line = NULL;
+		line_len = 0;
+		lines_read++;
+		if(lines_read == total_lines) {
+			// reallocate lines buffer
+			// printf("Hello\n");
+			buf = (char **)realloc(lines,total_lines*MULTIPLE*sizeof(char *));
+			// printf("==Hello==\n");
+			if(buf == NULL) {
+				// realloc failed, free all read lines
+				for(i = 0; i < lines_read; i++)
+					free(lines[i]);
+				free(lines);
+				free(lines_len);
+				*_lines = NULL;
+				*_lines_num = 0;
+				*_lines_len = NULL;
+				return NO_MEMORY;
+			}
+			lines = buf;
+			// realloc does not initialize allocated memory
+			for(i = lines_read; i < total_lines*MULTIPLE; i++)
+				lines[i] = NULL;
+			// reallocate lines length buffer
+			buf = (size_t *)realloc(lines_len,total_lines*MULTIPLE*sizeof(size_t));
+			if(buf == NULL) {
+				// realloc failed, free all read lines
+				for(i = 0; i < lines_read; i++)
+					free(lines[i]);
+				free(lines);
+				free(lines_len);
+				*_lines = NULL;
+				*_lines_num = 0;
+				*_lines_len = NULL;
+				return NO_MEMORY;
+			}
+			lines_len = buf;		
+			total_lines *= MULTIPLE;
+		}
+	}
+	// getline failed, free allocated buffer
+	free(line);
+	if(errno == 0)
+	{
+		// We have read the entire file without errors
+		// write NULL pointer to last line
+		lines[lines_read] = NULL;
+		*_lines = lines;
+		*_lines_num = lines_read;
+		*_lines_len = lines_len;
+		return SUCCESS;
+	}
+	else if(errno != 0)
+	{
+		// Error happened while reading the file
+		// free all read lines
+		for(i = 0; i < lines_read; i++)
+			free(lines[i]);
+		free(lines);
+		free(lines_len);
+		*_lines = NULL;
+		*_lines_num = 0;
+		*_lines_len = NULL;
+		return READ_ERROR;
+	}
+	return ASSERT_ERROR;
+}
+
+/* Объединяет весь массив строк в одну строку */
+char *my_getline () {
+	char **lines = NULL; // переменная для массива строк
+	size_t lines_num = 0; // для числа прочитанных строк
+	size_t *lines_len = NULL; // для длины каждой строки
+	int code = get_lines (&lines, &lines_num, &lines_len);
+	if (code != SUCCESS)
+		return NULL;
+	else {
+		size_t i;
+		size_t sum = 0;
+		for (i = 0; i < lines_num; i++)
+			sum += lines_len[i];
+		// Теперь мы знаем длину итоговой строки
+		char *result = (char *) malloc (sum + 1);
+		result[0] = NULL_BYTE; // изначально строка нулевой длины
+		for (i = 0; i < lines_num; i++)
+			strncat (result, lines[i], lines_len[i] + 1);
+		for (i = 0; i < lines_num; i++) {
+			free (lines[i]);
+		}
+		free (lines);
+		free (lines_len);
+		return result;
+	}
+}
+
+#if DEBUG
 #include "tests.h"
+#endif
 int main()
 {
-	// test_compare ();
-	// test_addition ();
-	// test_same_addition ();
-	// test_subtraction ();
-	// test_shift_left ();
-	// test_multiply_by_digit ();
-	// test_multiplication ();
-	// tests_multiplication ();
-	// test_divide_partial ();
-	// test_add_digit ();
-	// test_division ();
-	// test_add_signed ();
-	// test_subtract_signed ();
-	// test_mult_signed ();
-	// test_div_signed ();
+	#if DEBUG
+	test_compare ();
+	test_addition ();
+	test_same_addition ();
+	test_subtraction ();
+	test_shift_left ();
+	test_multiply_by_digit ();
+	test_multiplication ();
+	tests_multiplication ();
+	test_divide_partial ();
+	test_add_digit ();
+	test_division ();
+	test_add_signed ();
+	test_subtract_signed ();
+	test_mult_signed ();
+	test_div_signed ();
 	test_parse ();
 	test_big_parse ();
+	#endif
 
-	size_t n = 0;
-	input = NULL;
-	int code = getline (&input, &n, stdin);
-	char *input_str_ptr = input; // для free
-	if (code == -1) {
+	input = my_getline ();
+	char *start_input_pointer = input; // для free
+	if (input == NULL) {
 		// getline failed
-		free (input);
 		print_error();
 	}
 	else {
@@ -943,7 +1099,8 @@ int main()
 			free_expression (expr);
 		if (answer)
 			free (answer);
+		// printf ("Состояние строки: %s\n", start_input_pointer);
+		free (start_input_pointer);
 	}
-	free (input_str_ptr);
 	return 0;
 }
